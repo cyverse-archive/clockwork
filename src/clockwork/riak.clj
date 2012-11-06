@@ -1,8 +1,13 @@
 (ns clockwork.riak
   (:use [cheshire.core :only [parse-string]]
+        [clj-time.format :only [parse formatter]]
         [clockwork.config :only [riak-base]])
   (:require [cemerick.url :as curl]
             [clojure-commons.client :as client]))
+
+(def ^:private fmt
+  "The formatter to use when parsing timestamps."
+  (formatter "EEE, dd MMM YYYY HH:mm:ss 'GMT'"))
 
 (defn bucket-url
   "Builds a Riak URL that refers to a bucket."
@@ -22,6 +27,12 @@
       :body
       (parse-string true)
       :keys))
+
+(defn object-last-modified
+  "Gets the last modified timestamp of an object."
+  [bucket k]
+  (->> (get-in (client/get (str (object-url bucket k))) [:headers "last-modified"])
+       (parse fmt)))
 
 (defn remove-object
   "Removes an object from Riak."

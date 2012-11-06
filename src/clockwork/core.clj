@@ -1,7 +1,10 @@
 (ns clockwork.core
   (:gen-class)
-  (:use [clojure.tools.cli :only [cli]])
+  (:use [clojure.tools.cli :only [cli]]
+        [slingshot.slingshot :only [try+]])
   (:require [clojure.tools.logging :as log]
+            [clojure.string :as string]
+            [clojure-commons.error-codes :as ce]
             [clockwork.config :as config]
             [clockwork.tree-urls :as ctu]
             [clojurewerkz.quartzite.jobs :as qj]
@@ -9,22 +12,39 @@
             [clojurewerkz.quartzite.scheduler :as qs]
             [clojurewerkz.quartzite.triggers :as qt]))
 
-(qj/defjob remove-unreferenced-tree-urls
-  [ctx]
-  (ctu/remove-unreferenced-tree-urls))
+(defn- timestamp->time-of-day
+  "Converts a timestamp in HH:MM:SS format to a TimeOfDay instance."
+  [timestamp]
+  (->> (string/split timestamp #":")
+        (map #(Long/parseLong %))
+        (apply qsd/time-of-day)))
 
-(defn- schedule-remove-unreferenced-tree-urls-job
-  "Schedules the job to remove unreferenced tree URLs from the external storage."
+(defn- tree-urls-cleanup-start
+  "The start time for the tree URLs cleanup."
+  []
+  (let [start (config/tree-urls-cleanup-start)]
+    (try+
+     (timestamp->time-of-day start)
+     (catch NumberFormatException e
+       (log/error "Invalid tree URLs cleanup start time:" start)
+       (System/exit 1)))))
+
+(qj/defjob clean-up-old-tree-urls
+  [ctx]
+  (ctu/clean-up-old-tree-urls))
+
+(defn- schedule-clean-up-old-tree-urls-job
+  "Schedules the job to remove old tree URLs from the external storage."
   []
   (let [job     (qj/build
-                 (qj/of-type remove-unreferenced-tree-urls)
+                 (qj/of-type clean-up-old-tree-urls)
                  (qj/with-identity (qj/key "jobs.tree-urls.1")))
         trigger (qt/build
                  (qt/with-identity (qt/key "triggers.tree-urls.1"))
                  (qt/with-schedule (qsd/schedule
                                     (qsd/ignore-misfires)
                                     (qsd/every-day)
-                                    (qsd/starting-daily-at (qsd/time-of-day 1 30 0))
+                                    (qsd/starting-daily-at (tree-urls-cleanup-start))
                                     (qsd/with-repeat-count 0))))]
     (qs/schedule job trigger)))
 
@@ -33,7 +53,7 @@
   []
   (qs/initialize)
   (qs/start)
-  (schedule-remove-unreferenced-tree-urls-job))
+  (schedule-clean-up-old-tree-urls-job))
 
 (defn- parse-args
   "Parses the command-line arguments."

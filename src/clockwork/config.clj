@@ -31,6 +31,16 @@
   [props config-valid configs]
   "clockwork.tree-urls-avu")
 
+(cc/defprop-int tree-urls-cleanup-age
+  "The mimimum age in days of a tree URL entry for it to be considered for cleanup."
+  [props config-valid configs]
+  "clockwork.tree-urls-cleanup-age")
+
+(cc/defprop-str tree-urls-cleanup-start
+  "The time of day in HH:MM:SS format that the tree URLs cleanup job should start every day."
+  [props config-valid configs]
+  "clockwork.tree-urls-cleanup-start")
+
 (cc/defprop-str irods-host
   "The host name or IP address to use when connecting to iRODS."
   [props config-valid configs]

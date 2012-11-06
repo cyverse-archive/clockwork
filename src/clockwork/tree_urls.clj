@@ -1,5 +1,7 @@
 (ns clockwork.tree-urls
-  (:use [clockwork.config :only [jargon-config tree-urls-bucket tree-urls-avu]]
+  (:use [clj-time.core :only [after? days now plus]]
+        [clockwork.config
+         :only [jargon-config tree-urls-bucket tree-urls-avu tree-urls-cleanup-age]]
         [slingshot.slingshot :only [try+]])
   (:require [clj-jargon.jargon :as jargon]
             [clockwork.riak :as riak]
@@ -10,8 +12,8 @@
   "Gets the list of keys in the tree URLs bucket."
   []
   (try+
-   (log/debug "obtaining the list of tree URL keys")
-   (riak/list-keys (tree-urls-bucket))
+   (doto (riak/list-keys (tree-urls-bucket))
+     (#(log/debug "tree URL keys:" %)))
    (catch [:error_code ce/ERR_REQUEST_FAILED] {:keys [body]}
      (log/error "unable to get the list of tree URL keys -" body)
      [])
@@ -19,39 +21,52 @@
      (log/error e "unable to get the list of tree URL keys")
      [])))
 
-(defn- associated-with-file
+(defn- associated-with-file?
   "Determines if a tree URL key is associated with any file in iRODS."
   [cm k]
-  (log/debug "determining if key" k "is associated with a file in iRODS")
   (let [path (:path (riak/object-url (tree-urls-bucket) k))]
-    (> (count (jargon/list-files-with-avu cm (tree-urls-avu) := path)) 0)))
+    (doto (> (count (jargon/list-files-with-avu cm (tree-urls-avu) := path)) 0)
+      (#(log/debug "key" k (if % "is" "is not") "associated with a file in iRODS")))))
 
 (defn- remove-referenced-keys
   "Removes any tree URL keys that are referenced in iRODS from a collection."
   [ks]
   (jargon/with-jargon (jargon-config) [cm]
-    (doall (remove (partial associated-with-file cm) ks))))
+    (doall (remove (partial associated-with-file? cm) ks))))
+
+(defn too-young-to-delete?
+  "Determines if a tree URL key was last modified too recently for it to be deleted."
+  [min-age k]
+  (doto (after? (plus (riak/object-last-modified  (tree-urls-bucket) k) (days min-age))
+                (now))
+    (#(log/debug "key" k (if % "is" "is not") "too young to delete"))))
+
+(defn- remove-recent-tree-urls
+  "Removes any tree URL keys that are younger than the minimum cleanup age from a collection."
+  [ks]
+  (doall (remove (partial too-young-to-delete? (tree-urls-cleanup-age)) ks)))
 
 (defn- delete-object
   "Deletes a tree URL object."
   [k]
   (try+
-   (log/debug "deleting tree URLs for key" k)
+   (log/info "deleting tree URLs for key" k)
    (riak/remove-object (tree-urls-bucket) k)
    (catch [:error_code ce/ERR_REQUEST_FAILED] {:keys [body]}
      (log/warn "unable to delete tree URL object" k "-" body))
    (catch Exception e
      (log/warn e "unable to delete tree URL object" k))))
 
-(defn remove-unreferenced-tree-urls
-  "Removes tree URL objects that are no longer referenced in iRODS.  This is the function that
-   implements the remove-unreferenced-tree-urls job."
+(defn clean-up-old-tree-urls
+  "Removes tree URL objects that are no longer referenced in iRODS and are old enough to be cleaned
+   up.  This is the function that implements the clean-up-old-tree-urls job."
   []
   (log/info "removing unreferenced tree URLs from external storage")
   (try
     (dorun
      (->> (get-tree-url-keys)
           (remove-referenced-keys)
+          (remove-recent-tree-urls)
           (map delete-object)))
     (catch Exception e
       (log/error e "unexpected error in remove-old-trees")))

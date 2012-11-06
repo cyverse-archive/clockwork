@@ -8,6 +8,7 @@
                  [org.clojure/tools.logging "0.2.3"]
                  [cheshire "4.0.3"]
                  [clj-http "0.5.6"]
+                 [clj-time "0.4.4"]
                  [clojurewerkz/quartzite "1.0.1"]
                  [com.cemerick/url "0.0.7"]
                  [log4j "1.2.17"]
