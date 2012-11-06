@@ -24,7 +24,8 @@
                  (qt/with-schedule (qsd/schedule
                                     (qsd/ignore-misfires)
                                     (qsd/every-day)
-                                    (qsd/starting-daily-at (qsd/time-of-day 0 0 0)))))]
+                                    (qsd/starting-daily-at (qsd/time-of-day 1 30 0))
+                                    (qsd/with-repeat-count 0))))]
     (qs/schedule job trigger)))
 
 (defn- init-scheduler
