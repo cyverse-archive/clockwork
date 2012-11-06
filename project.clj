@@ -18,13 +18,14 @@
                  [org.slf4j/slf4j-log4j12 "1.6.6"]
                  [slingshot "0.10.3"]]
   :plugins [[org.iplantc/lein-iplant-rpm "1.4.0-SNAPSHOT"]]
+  :profiles {:dev {:resource-paths ["resources/test"]}}
   :aot [clockwork.core]
   :main clockwork.core
   :iplant-rpm {:summary "Scheduled jobs for the iPlant Discovery Environment"
                :provides "clockwork"
                :dependencies ["iplant-service-config >= 0.1.0-5"]
                :config-files ["log4j.properties"]
-               :config-path "resources"}
+               :config-path "resources/main"}
   :uberjar-exclusions [#"BCKEY.SF"]
   :repositories {"iplantCollaborative"
                  "http://projects.iplantcollaborative.org/archiva/repository/internal/"})
