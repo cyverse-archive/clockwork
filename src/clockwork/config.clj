@@ -2,7 +2,9 @@
   (:use [slingshot.slingshot :only [throw+]])
   (:require [clj-jargon.jargon :as jargon]
             [clojure-commons.config :as cc]
-            [clojure-commons.error-codes :as ce]))
+            [clojure-commons.error-codes :as ce]
+            [clojure-commons.infosquito.work-queue :as queue]
+            [com.github.drsnyder.beanstalk :as beanstalk]))
 
 (def ^:private props
   "A ref for storing the configuration properties."
@@ -76,6 +78,36 @@
   [props config-valid configs]
   "clockwork.irods-resource")
 
+(cc/defprop-str beanstalk-host
+  "The hostname to use when connecting to Beanstalk."
+  [props config-valid configs]
+  "clockwork.beanstalk.host")
+
+(cc/defprop-int beanstalk-port
+  "The port number to use when connecting to Beanstalk."
+  [props config-valid configs]
+  "clockwork.beanstalk.port")
+
+(cc/defprop-int beanstalk-connect-retries
+  "The number of times to retry failed Beanstalk connection attempts."
+  [props config-valid configs]
+  "clockwork.beanstalk.connect-retries")
+
+(cc/defprop-int beanstalk-task-ttr
+  "The maximum amount of time that a Beanstalk task can be reserved."
+  [props config-valid configs]
+  "clockwork.beanstalk.task-ttr")
+
+(cc/defprop-int infosquito-sync-interval
+  "The number of hours between synchronization tasks for Infosquito."
+  [props config-valid configs]
+  "clockwork.infosquito.sync-interval")
+
+(cc/defprop-str infosquito-beanstalk-tube
+  "The tube to use when publishing work-queue items for Infosquito."
+  [props config-valid configs]
+  "clockwork.infosquito.beanstalk-tube")
+
 (defn- validate-config
   "Validates the configuration settings after they've been loaded."
   []
@@ -101,3 +133,10 @@
   []
   (jargon/init (irods-host) (irods-port) (irods-user) (irods-password) (irods-home) (irods-zone)
                (irods-resource)))
+
+(defn beanstalk-queue
+  "Obtains a beanstalk work-queue client."
+  []
+  (queue/mk-client
+   #(beanstalk/new-beanstalk (beanstalk-host) (beanstalk-port))
+   (beanstalk-connect-retries) (beanstalk-task-ttr) (infosquito-beanstalk-tube)))

@@ -6,9 +6,11 @@
             [clojure.string :as string]
             [clojure-commons.error-codes :as ce]
             [clockwork.config :as config]
+            [clockwork.infosquito :as ci]
             [clockwork.tree-urls :as ctu]
             [clojurewerkz.quartzite.jobs :as qj]
             [clojurewerkz.quartzite.schedule.daily-interval :as qsd]
+            [clojurewerkz.quartzite.schedule.simple :as qss]
             [clojurewerkz.quartzite.scheduler :as qs]
             [clojurewerkz.quartzite.triggers :as qt]))
 
@@ -48,12 +50,31 @@
                                     (qsd/with-repeat-count 0))))]
     (qs/schedule job trigger)))
 
+(qj/defjob publish-infosquito-sync-task
+  [ctx]
+  (ci/publish-sync-task))
+
+(defn- schedule-publish-infosquito-sync-task-job
+  "Schedules the job to publish synchronization tasks for consumption by Infosquito."
+  []
+  (let [job     (qj/build
+                 (qj/of-type publish-infosquito-sync-task)
+                 (qj/with-identity (qj/key "jobs.infosquito-sync-task.1")))
+        trigger (qt/build
+                 (qt/with-identity (qt/key "triggers.infosquito-sync-task.1"))
+                 (qt/with-schedule (qss/schedule
+                                    (qss/ignore-misfires)
+                                    (qss/with-interval-in-hours (config/infosquito-sync-interval))
+                                    (qss/repeat-forever))))]
+    (qs/schedule job trigger)))
+
 (defn- init-scheduler
   "Initializes the scheduler."
   []
   (qs/initialize)
   (qs/start)
-  (schedule-clean-up-old-tree-urls-job))
+  (schedule-clean-up-old-tree-urls-job)
+  (schedule-publish-infosquito-sync-task-job))
 
 (defn- parse-args
   "Parses the command-line arguments."
