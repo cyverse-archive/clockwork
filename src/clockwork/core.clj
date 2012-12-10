@@ -9,27 +9,30 @@
             [clockwork.infosquito :as ci]
             [clockwork.tree-urls :as ctu]
             [clojurewerkz.quartzite.jobs :as qj]
-            [clojurewerkz.quartzite.schedule.daily-interval :as qsd]
+            [clojurewerkz.quartzite.schedule.cron :as qsc]
             [clojurewerkz.quartzite.schedule.simple :as qss]
             [clojurewerkz.quartzite.scheduler :as qs]
             [clojurewerkz.quartzite.triggers :as qt]))
-
-(defn- timestamp->time-of-day
-  "Converts a timestamp in HH:MM:SS format to a TimeOfDay instance."
-  [timestamp]
-  (->> (string/split timestamp #":")
-        (map #(Long/parseLong %))
-        (apply qsd/time-of-day)))
 
 (defn- tree-urls-cleanup-start
   "The start time for the tree URLs cleanup."
   []
   (let [start (config/tree-urls-cleanup-start)]
     (try+
-     (timestamp->time-of-day start)
+     (->> (string/split start #":")
+          (map #(Long/parseLong %))
+          (take 2))
      (catch NumberFormatException e
        (log/error "Invalid tree URLs cleanup start time:" start)
        (System/exit 1)))))
+
+(defn- qualified-name
+  "Creates a qualified name for a prefix and a given basename."
+  [prefix base]
+  (str prefix \. base))
+
+(def ^:private job-name (partial qualified-name "jobs"))
+(def ^:private trigger-name (partial qualified-name "triggers"))
 
 (qj/defjob clean-up-old-tree-urls
   [ctx]
@@ -37,18 +40,20 @@
 
 (defn- schedule-clean-up-old-tree-urls-job
   "Schedules the job to remove old tree URLs from the external storage."
-  []
-  (let [job     (qj/build
-                 (qj/of-type clean-up-old-tree-urls)
-                 (qj/with-identity (qj/key "jobs.tree-urls.1")))
-        trigger (qt/build
-                 (qt/with-identity (qt/key "triggers.tree-urls.1"))
-                 (qt/with-schedule (qsd/schedule
-                                    (qsd/ignore-misfires)
-                                    (qsd/every-day)
-                                    (qsd/starting-daily-at (tree-urls-cleanup-start))
-                                    (qsd/with-repeat-count 0))))]
-    (qs/schedule job trigger)))
+  ([hr min]
+     (let [basename "tree-urls.1"
+           job      (qj/build
+                     (qj/of-type clean-up-old-tree-urls)
+                     (qj/with-identity (qj/key (job-name basename))))
+           trigger  (qt/build
+                     (qt/with-identity (qt/key (trigger-name basename)))
+                     (qt/with-schedule (qsc/schedule
+                                        (qsc/daily-at-hour-and-minute hr min)
+                                        (qsc/ignore-misfires))))]
+       (qs/schedule job trigger)
+       (log/debug (qs/get-trigger (trigger-name basename)))))
+  ([]
+     (apply schedule-clean-up-old-tree-urls-job (tree-urls-cleanup-start))))
 
 (qj/defjob publish-infosquito-sync-task
   [ctx]
@@ -57,16 +62,18 @@
 (defn- schedule-publish-infosquito-sync-task-job
   "Schedules the job to publish synchronization tasks for consumption by Infosquito."
   []
-  (let [job     (qj/build
-                 (qj/of-type publish-infosquito-sync-task)
-                 (qj/with-identity (qj/key "jobs.infosquito-sync-task.1")))
-        trigger (qt/build
-                 (qt/with-identity (qt/key "triggers.infosquito-sync-task.1"))
-                 (qt/with-schedule (qss/schedule
-                                    (qss/ignore-misfires)
-                                    (qss/with-interval-in-hours (config/infosquito-sync-interval))
-                                    (qss/repeat-forever))))]
-    (qs/schedule job trigger)))
+  (let [basename "infosquito-sync-task.1"
+        job      (qj/build
+                  (qj/of-type publish-infosquito-sync-task)
+                  (qj/with-identity (qj/key (job-name basename))))
+        trigger  (qt/build
+                  (qt/with-identity (qt/key (trigger-name basename)))
+                  (qt/with-schedule (qss/schedule
+                                     (qss/with-interval-in-hours (config/infosquito-sync-interval))
+                                     (qss/repeat-forever)
+                                     (qss/ignore-misfires))))]
+    (qs/schedule job trigger)
+    (log/debug (qs/get-trigger (trigger-name basename)))))
 
 (defn- init-scheduler
   "Initializes the scheduler."
