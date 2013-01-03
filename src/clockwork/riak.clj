@@ -1,9 +1,12 @@
 (ns clockwork.riak
   (:use [cheshire.core :only [parse-string]]
         [clj-time.format :only [parse formatter]]
-        [clockwork.config :only [riak-base]])
+        [clockwork.config :only [riak-base]]
+        [slingshot.slingshot :only [try+ throw+]])
   (:require [cemerick.url :as curl]
-            [clojure-commons.client :as client]))
+            [clojure-commons.client :as client]
+            [clojure-commons.error-codes :as ce]
+            [clojure.tools.logging :as log]))
 
 (def ^:private fmt
   "The formatter to use when parsing timestamps."
@@ -31,8 +34,15 @@
 (defn object-last-modified
   "Gets the last modified timestamp of an object."
   [bucket k]
-  (->> (get-in (client/get (str (object-url bucket k))) [:headers "last-modified"])
-       (parse fmt)))
+  (try+
+   (->> (client/get (str (object-url bucket k)))
+        (#(get-in % [:headers "last-modified"]))
+        (parse fmt))
+   (catch [:error_code ce/ERR_REQUEST_FAILED] {:keys [body]}
+     (log/warn "unable to find last modified date of:" bucket "-" k))
+   (catch Exception e
+     (log/error e "unexpected error")
+     (throw+))))
 
 (defn remove-object
   "Removes an object from Riak."
