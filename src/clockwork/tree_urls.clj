@@ -25,7 +25,7 @@
   "Determines if a tree URL key is associated with any file in iRODS."
   [cm k]
   (let [path (:path (riak/object-url (tree-urls-bucket) k))]
-    (doto (> (count (jargon/list-files-with-avu cm (tree-urls-avu) := path)) 0)
+    (doto (pos? (count (jargon/list-files-with-avu cm (tree-urls-avu) := path)))
       (#(log/debug "key" k (if % "is" "is not") "associated with a file in iRODS")))))
 
 (defn- remove-referenced-keys
