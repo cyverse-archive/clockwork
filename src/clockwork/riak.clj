@@ -6,16 +6,12 @@
   (:require [cemerick.url :as curl]
             [clojure-commons.client :as client]
             [clojure-commons.error-codes :as ce]
+            [clojure-commons.riak :as cr]
             [clojure.tools.logging :as log]))
 
 (def ^:private fmt
   "The formatter to use when parsing timestamps."
   (formatter "EEE, dd MMM YYYY HH:mm:ss 'GMT'"))
-
-(defn bucket-url
-  "Builds a Riak URL that refers to a bucket."
-  [bucket]
-  (curl/url (riak-base) bucket))
 
 (defn object-url
   "Builds a Riak URL that refers to an object."
@@ -25,26 +21,24 @@
 (defn list-keys
   "Lists the keys in a Riak bucket."
   [bucket]
-  (-> (client/get (str (bucket-url bucket))
-                  {:query-params {:keys true}})
-      :body
-      (parse-string true)
-      :keys))
+  (cr/list-keys (riak-base) bucket))
+
+(defn- parse-last-modified-date
+  [date-str]
+  (try+
+   (parse fmt date-str)
+   (catch Exception e
+     (log/warn "unable to parse last modified date:" date-str))))
 
 (defn object-last-modified
   "Gets the last modified timestamp of an object."
   [bucket k]
-  (try+
-   (->> (client/get (str (object-url bucket k)))
-        (#(get-in % [:headers "last-modified"]))
-        (parse fmt))
-   (catch [:error_code ce/ERR_REQUEST_FAILED] {:keys [body]}
-     (log/warn "unable to find last modified date of:" bucket "-" k))
-   (catch Exception e
-     (log/error e "unexpected error")
-     (throw+))))
+  (let [res (cr/get-object (riak-base) bucket k {:throw-exceptions false})]
+    (if (<= 200 (:status res) 299)
+      (parse-last-modified-date (get-in res [:headers "last-modified"]))
+      (log/warn "unable to find last modified date of:" bucket "-" k))))
 
 (defn remove-object
   "Removes an object from Riak."
   [bucket k]
-  (client/delete (str (object-url bucket k))))
+  (cr/delete-object (riak-base) bucket k))
