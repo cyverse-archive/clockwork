@@ -25,7 +25,7 @@
   "Determines if a tree URL key is associated with any file in iRODS."
   [cm k]
   (let [path (:path (riak/object-url (tree-urls-bucket) k))]
-    (doto (> (count (jargon/list-files-with-avu cm (tree-urls-avu) := path)) 0)
+    (doto (pos? (count (jargon/list-files-with-avu cm (tree-urls-avu) := path)))
       (#(log/debug "key" k (if % "is" "is not") "associated with a file in iRODS")))))
 
 (defn- remove-referenced-keys
@@ -37,9 +37,12 @@
 (defn too-young-to-delete?
   "Determines if a tree URL key was last modified too recently for it to be deleted."
   [min-age k]
-  (doto (after? (plus (riak/object-last-modified  (tree-urls-bucket) k) (days min-age))
-                (now))
-    (#(log/debug "key" k (if % "is" "is not") "too young to delete"))))
+  (let [too-young? #(after? (plus % (days min-age)) (now))
+        mod-time   (riak/object-last-modified (tree-urls-bucket) k)]
+    (cond
+     (nil? mod-time)       (do (log/debug "key" k "does not exist") true)
+     (too-young? mod-time) (do (log/debug "key" k "is too young to delete") true)
+     :else                 (do (log/debug "key" k "may be deleted") false))))
 
 (defn- remove-recent-tree-urls
   "Removes any tree URL keys that are younger than the minimum cleanup age from a collection."
