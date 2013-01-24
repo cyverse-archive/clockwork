@@ -108,6 +108,51 @@
   [props config-valid configs]
   "clockwork.infosquito.beanstalk-tube")
 
+(cc/defprop-str notification-cleanup-start
+  "The start time for the notification cleanup job."
+  [props config-valid configs]
+  "clockwork.notifications.cleanup-start")
+
+(cc/defprop-int notification-cleanup-age
+  "The minimum age of a notification in days before it's eligible for cleanup."
+  [props config-valid configs]
+  "clockwork.notifications.cleanup-age")
+
+(cc/defprop-str notification-db-driver-class
+  "The name of the JDBC driver to use."
+  [props config-valid configs]
+  "clockwork.notifications.db.driver" )
+
+(cc/defprop-str notification-db-subprotocol
+  "The subprotocol to use when connecting to the database (e.g. postgresql)."
+  [props config-valid configs]
+  "clockwork.notifications.db.subprotocol")
+
+(cc/defprop-str notification-db-host
+  "The host name or IP address to use when connecting to the database."
+  [props config-valid configs]
+  "clockwork.notifications.db.host")
+
+(cc/defprop-str notification-db-port
+  "The port number to use when connecting to the database."
+  [props config-valid configs]
+  "clockwork.notifications.db.port")
+
+(cc/defprop-str notification-db-name
+  "The name of the database to connect to."
+  [props config-valid configs]
+  "clockwork.notifications.db.name")
+
+(cc/defprop-str notification-db-user
+  "The username to use when authenticating to the database."
+  [props config-valid configs]
+  "clockwork.notifications.db.user")
+
+(cc/defprop-str notification-db-password
+  "The password to use when authenticating to the database."
+  [props config-valid configs]
+  "clockwork.notifications.db.password")
+
 (defn- validate-config
   "Validates the configuration settings after they've been loaded."
   []

@@ -7,6 +7,7 @@
             [clojure-commons.error-codes :as ce]
             [clockwork.config :as config]
             [clockwork.infosquito :as ci]
+            [clockwork.notifications :as cn]
             [clockwork.tree-urls :as ctu]
             [clojurewerkz.quartzite.jobs :as qj]
             [clojurewerkz.quartzite.schedule.cron :as qsc]
@@ -14,17 +15,31 @@
             [clojurewerkz.quartzite.scheduler :as qs]
             [clojurewerkz.quartzite.triggers :as qt]))
 
+(defn- split-timestamp
+  "Splits a timestamp into its components.  The timestamp should be in the format, HH:MM.  If
+   seconds are included in the timestamp, they will be ignored."
+  [timestamp error-message]
+  (try+
+   (->> (string/split timestamp)
+        (map #(Long/parseLong %))
+        (take 2))
+   (catch NumberFormatException e
+     (log/error error-message timestamp)
+     (System/exit 1))))
+
 (defn- tree-urls-cleanup-start
   "The start time for the tree URLs cleanup."
   []
-  (let [start (config/tree-urls-cleanup-start)]
-    (try+
-     (->> (string/split start #":")
-          (map #(Long/parseLong %))
-          (take 2))
-     (catch NumberFormatException e
-       (log/error "Invalid tree URLs cleanup start time:" start)
-       (System/exit 1)))))
+  (split-timestamp
+   (config/tree-urls-cleanup-start)
+   "Invalid tree URLs cleanup start time:"))
+
+(defn- notification-cleanup-start
+  "The start time for the notification cleanup."
+  []
+  (split-timestamp
+   (config/notification-cleanup-start)
+   "Invalid notification cleanup start time:"))
 
 (defn- qualified-name
   "Creates a qualified name for a prefix and a given basename."
@@ -75,13 +90,35 @@
     (qs/schedule job trigger)
     (log/debug (qs/get-trigger (trigger-name basename)))))
 
+(qj/defjob clean-up-old-notifications
+  [ctx]
+  (cn/clean-up-old-notifications))
+
+(defn- schedule-notification-cleanup-job
+  "Schedules the job to publish notification cleanup tasks."
+  ([hr min]
+     (let [basename "notification-cleanup.1"
+           job      (qj/build
+                     (qj/of-type clean-up-old-notifications)
+                     (qj/with-identity (qj/key (job-name basename))))
+           trigger  (qt/build
+                     (qt/with-identity (qt/key (trigger-name basename)))
+                     (qt/with-schedule (qsc/schedule
+                                        (qsc/daily-at-hour-and-minute hr min)
+                                        (qsc/ignore-misfires))))]
+       (qs/schedule job trigger)
+       (log/debug (qs/get-trigger (trigger-name basename)))))
+  ([]
+     (apply schedule-notification-cleanup-job (notification-cleanup-start))))
+
 (defn- init-scheduler
   "Initializes the scheduler."
   []
   (qs/initialize)
   (qs/start)
   (schedule-clean-up-old-tree-urls-job)
-  (schedule-publish-infosquito-sync-task-job))
+  (schedule-publish-infosquito-sync-task-job)
+  (schedule-notification-cleanup-job))
 
 (defn- parse-args
   "Parses the command-line arguments."
