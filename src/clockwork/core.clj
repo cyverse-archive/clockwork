@@ -20,7 +20,7 @@
    seconds are included in the timestamp, they will be ignored."
   [timestamp error-message]
   (try+
-   (->> (string/split timestamp)
+   (->> (string/split timestamp #":")
         (map #(Long/parseLong %))
         (take 2))
    (catch NumberFormatException e

@@ -38,6 +38,21 @@
   []
   (Timestamp. (.getMillis (minus (now) (days (config/notification-cleanup-age))))))
 
+(defn- delete-email-notification-messages
+  "Cleans up e-mail notification records that are associated with notifications that will be
+   cleaned up by the current cleanup job."
+  [cleanup-age]
+  (exec-raw ["DELETE FROM email_notification_messages
+              USING notifications n
+              WHERE notification_id = n.id
+              AND n.date_created < ?" [cleanup-age]]))
+
+(defn- delete-notifications
+  "Removes old notifications from the database."
+  [cleanup-age]
+  (delete notifications
+          (where {:date_created [< cleanup-age]})))
+
 (defn clean-up-old-notifications
   "Cleans up notifications that are more than a configurable number of days old.  For the time
    being, analysis execution status records are not being deleted because they don't consume
@@ -48,9 +63,7 @@
   (let [cleanup-age (notification-cleanup-age)]
     (transaction
      (log/debug "deleting email notification records")
-     (delete email_notification_messages
-             (where {:date_sent [< cleanup-age]}))
+     (delete-email-notification-messages cleanup-age)
      (log/debug "deleting the notifications themselves")
-     (delete notifications
-             (where {:date_created [< cleanup-age]}))))
+     (delete-notifications cleanup-age)))
   (log/info "finished cleaning up old notifications"))
