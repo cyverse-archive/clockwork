@@ -3,26 +3,26 @@
   :url "http://www.iplantcollaborative.org"
   :license {:name "iPlant Standard BSD License"
             :url "http://iplantcollaborative.org/sites/default/files/iPLANT-LICENSE.txt"}
-  :dependencies [[org.clojure/clojure "1.4.0"]
+  :dependencies [[org.clojure/clojure "1.5.0"]
                  [org.clojure/java.jdbc "0.2.3"]
                  [org.clojure/tools.cli "0.2.2"]
                  [org.clojure/tools.logging "0.2.3"]
-                 [cheshire "5.0.1"]
-                 [clj-http "0.6.3"]
-                 [clj-time "0.4.4"]
+                 [cheshire "5.0.2"]
+                 [clj-http "0.6.5"]
+                 [clj-time "0.4.5"]
                  [clojurewerkz/quartzite "1.0.1"]
                  [com.cemerick/url "0.0.7"]
                  [com.github.drsnyder/beanstalk "1.0.0-clj14"]
                  [korma "0.3.0-RC2"]
                  [log4j "1.2.17"]
-                 [org.iplantc/clj-jargon "0.2.2-SNAPSHOT"
+                 [org.iplantc/clj-jargon "0.2.4-SNAPSHOT"
                   :exclusions [[org.irods.jargon.transfer/jargon-transfer-dao-spring]]]
-                 [org.iplantc/clojure-commons "1.4.0-SNAPSHOT"]
-                 [org.iplantc/kameleon "0.1.0-SNAPSHOT"]
-                 [org.slf4j/slf4j-api "1.6.6"]
+                 [org.iplantc/clojure-commons "1.4.1-SNAPSHOT"]
+                 [org.iplantc/kameleon "0.1.1-SNAPSHOT"]
+                 [org.slf4j/slf4j-api "1.7.2"]
                  [org.slf4j/slf4j-log4j12 "1.6.6"]
                  [slingshot "0.10.3"]]
-  :plugins [[org.iplantc/lein-iplant-rpm "1.4.0-SNAPSHOT"]]
+  :plugins [[org.iplantc/lein-iplant-rpm "1.4.1-SNAPSHOT"]]
   :profiles {:dev {:resource-paths ["resources/test"]}}
   :aot [clockwork.core]
   :main clockwork.core
