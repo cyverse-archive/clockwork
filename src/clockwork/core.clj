@@ -123,7 +123,6 @@
   (when (config/notification-cleanup-enabled)
     (schedule-notification-cleanup-job)))
 
-
 (defn- parse-args
   "Parses the command-line arguments."
   [args]
