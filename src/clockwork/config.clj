@@ -130,6 +130,11 @@
   [props config-valid configs]
   "clockwork.notifications.cleanup-age")
 
+(cc/defprop-optboolean notification-cleanup-enabled
+  "Indicates whether notification cleanup tasks are enabled."
+  [props config-valid configs]
+  "clockwork.notifications.cleanup-enable")
+
 (cc/defprop-str notification-db-driver-class
   "The name of the JDBC driver to use."
   [props config-valid configs]
