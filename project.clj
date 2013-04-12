@@ -15,7 +15,7 @@
                  [log4j "1.2.17"]
                  [org.iplantc/clj-jargon "0.2.2-SNAPSHOT"
                   :exclusions [[org.irods.jargon.transfer/jargon-transfer-dao-spring]]]
-                 [org.iplantc/clojure-commons "1.3.2-SNAPSHOT"]
+                 [org.iplantc/clojure-commons "1.4.0-SNAPSHOT"]
                  [org.slf4j/slf4j-api "1.6.6"]
                  [org.slf4j/slf4j-log4j12 "1.6.6"]
                  [slingshot "0.10.3"]]
