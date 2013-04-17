@@ -43,6 +43,12 @@
   [props config-valid configs]
   "clockwork.tree-urls-cleanup-start")
 
+(cc/defprop-optboolean tree-urls-cleanup-enabled
+  "Indicates whether the tree URLs cleanup task should be enabled."
+  [props config-valid configs]
+  "clockwork.tree-urls-cleanup-enabled"
+  true)
+
 (cc/defprop-str irods-host
   "The host name or IP address to use when connecting to iRODS."
   [props config-valid configs]
@@ -98,15 +104,21 @@
   [props config-valid configs]
   "clockwork.beanstalk.task-ttr")
 
+(cc/defprop-str infosquito-beanstalk-tube
+  "The tube to use when publishing work-queue items for Infosquito."
+  [props config-valid configs]
+  "clockwork.infosquito.beanstalk-tube")
+
 (cc/defprop-int infosquito-sync-interval
   "The number of hours between synchronization tasks for Infosquito."
   [props config-valid configs]
   "clockwork.infosquito.sync-interval")
 
-(cc/defprop-str infosquito-beanstalk-tube
-  "The tube to use when publishing work-queue items for Infosquito."
+(cc/defprop-optboolean infosquito-sync-task-enabled
+  "Indicates whether Infosquito sync tasks are enabled."
   [props config-valid configs]
-  "clockwork.infosquito.beanstalk-tube")
+  "clockwork.infosquito.sync-task-enabled"
+  true)
 
 (defn- validate-config
   "Validates the configuration settings after they've been loaded."

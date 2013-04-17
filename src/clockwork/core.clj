@@ -80,8 +80,10 @@
   []
   (qs/initialize)
   (qs/start)
-  (schedule-clean-up-old-tree-urls-job)
-  (schedule-publish-infosquito-sync-task-job))
+  (when (config/tree-urls-cleanup-enabled)
+    (schedule-clean-up-old-tree-urls-job))
+  (when (config/infosquito-sync-task-enabled)
+    (schedule-publish-infosquito-sync-task-job)))
 
 (defn- parse-args
   "Parses the command-line arguments."
