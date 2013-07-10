@@ -15,7 +15,7 @@
                  [com.github.drsnyder/beanstalk "1.0.0-clj14"]
                  [korma "0.3.0-RC2"]
                  [log4j "1.2.17"]
-                 [org.iplantc/clj-jargon "0.2.4-SNAPSHOT"
+                 [org.iplantc/clj-jargon "0.2.7-SNAPSHOT"
                   :exclusions [[org.irods.jargon.transfer/jargon-transfer-dao-spring]]]
                  [org.iplantc/clojure-commons "1.4.1-SNAPSHOT"]
                  [org.iplantc/kameleon "0.1.1-SNAPSHOT"]
@@ -28,7 +28,7 @@
   :main clockwork.core
   :iplant-rpm {:summary "Scheduled jobs for the iPlant Discovery Environment"
                :provides "clockwork"
-               :dependencies ["iplant-service-config >= 0.1.0-5"]
+               :dependencies ["iplant-service-config >= 0.1.0-5" "iplant-clavin"]
                :config-files ["log4j.properties"]
                :config-path "resources/main"}
   :uberjar-exclusions [#"BCKEY.SF"]
