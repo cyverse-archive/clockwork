@@ -28,7 +28,7 @@
   :main clockwork.core
   :iplant-rpm {:summary "Scheduled jobs for the iPlant Discovery Environment"
                :provides "clockwork"
-               :dependencies ["iplant-service-config >= 0.1.0-5" "iplant-clavin"]
+               :dependencies ["iplant-service-config >= 0.1.0-5" "iplant-clavin" "java-1.7.0-openjdk"]
                :config-files ["log4j.properties"]
                :config-path "resources/main"}
   :uberjar-exclusions [#"BCKEY.SF"]
