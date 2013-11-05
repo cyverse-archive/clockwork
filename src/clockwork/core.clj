@@ -6,7 +6,6 @@
             [clojure.string :as string]
             [clojure-commons.error-codes :as ce]
             [clockwork.config :as config]
-            [clockwork.infosquito :as ci]
             [clockwork.notifications :as cn]
             [clockwork.tree-urls :as ctu]
             [clojurewerkz.quartzite.jobs :as qj]
@@ -70,26 +69,6 @@
   ([]
      (apply schedule-clean-up-old-tree-urls-job (tree-urls-cleanup-start))))
 
-(qj/defjob publish-infosquito-sync-task
-  [ctx]
-  (ci/publish-sync-task))
-
-(defn- schedule-publish-infosquito-sync-task-job
-  "Schedules the job to publish synchronization tasks for consumption by Infosquito."
-  []
-  (let [basename "infosquito-sync-task.1"
-        job      (qj/build
-                  (qj/of-type publish-infosquito-sync-task)
-                  (qj/with-identity (qj/key (job-name basename))))
-        trigger  (qt/build
-                  (qt/with-identity (qt/key (trigger-name basename)))
-                  (qt/with-schedule (qss/schedule
-                                     (qss/with-interval-in-hours (config/infosquito-sync-interval))
-                                     (qss/repeat-forever)
-                                     (qss/ignore-misfires))))]
-    (qs/schedule job trigger)
-    (log/debug (qs/get-trigger (trigger-name basename)))))
-
 (qj/defjob clean-up-old-notifications
   [ctx]
   (cn/clean-up-old-notifications))
@@ -118,8 +97,6 @@
   (qs/start)
   (when (config/tree-urls-cleanup-enabled)
     (schedule-clean-up-old-tree-urls-job))
-  (when (config/infosquito-sync-task-enabled)
-    (schedule-publish-infosquito-sync-task-job))
   (when (config/notification-cleanup-enabled)
     (schedule-notification-cleanup-job)))
 

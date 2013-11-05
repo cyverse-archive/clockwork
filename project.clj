@@ -12,7 +12,6 @@
                  [clj-time "0.4.5"]
                  [clojurewerkz/quartzite "1.0.1"]
                  [com.cemerick/url "0.0.7"]
-                 [com.github.drsnyder/beanstalk "1.0.0-clj14"]
                  [korma "0.3.0-RC2"]
                  [log4j "1.2.17"]
                  [org.iplantc/clj-jargon "0.2.7-SNAPSHOT"

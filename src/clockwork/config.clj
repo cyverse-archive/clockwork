@@ -2,9 +2,7 @@
   (:use [slingshot.slingshot :only [throw+]])
   (:require [clj-jargon.jargon :as jargon]
             [clojure-commons.config :as cc]
-            [clojure-commons.error-codes :as ce]
-            [clojure-commons.infosquito.work-queue :as queue]
-            [com.github.drsnyder.beanstalk :as beanstalk]))
+            [clojure-commons.error-codes :as ce]))
 
 (def ^:private props
   "A ref for storing the configuration properties."
@@ -84,42 +82,6 @@
   [props config-valid configs]
   "clockwork.irods-resource")
 
-(cc/defprop-str beanstalk-host
-  "The hostname to use when connecting to Beanstalk."
-  [props config-valid configs]
-  "clockwork.beanstalk.host")
-
-(cc/defprop-int beanstalk-port
-  "The port number to use when connecting to Beanstalk."
-  [props config-valid configs]
-  "clockwork.beanstalk.port")
-
-(cc/defprop-int beanstalk-connect-retries
-  "The number of times to retry failed Beanstalk connection attempts."
-  [props config-valid configs]
-  "clockwork.beanstalk.connect-retries")
-
-(cc/defprop-int beanstalk-task-ttr
-  "The maximum amount of time that a Beanstalk task can be reserved."
-  [props config-valid configs]
-  "clockwork.beanstalk.task-ttr")
-
-(cc/defprop-str infosquito-beanstalk-tube
-  "The tube to use when publishing work-queue items for Infosquito."
-  [props config-valid configs]
-  "clockwork.infosquito.beanstalk-tube")
-
-(cc/defprop-int infosquito-sync-interval
-  "The number of hours between synchronization tasks for Infosquito."
-  [props config-valid configs]
-  "clockwork.infosquito.sync-interval")
-
-(cc/defprop-optboolean infosquito-sync-task-enabled
-  "Indicates whether Infosquito sync tasks are enabled."
-  [props config-valid configs]
-  "clockwork.infosquito.sync-task-enabled"
-  true)
-
 (cc/defprop-str notification-cleanup-start
   "The start time for the notification cleanup job."
   [props config-valid configs]
@@ -195,10 +157,3 @@
   []
   (jargon/init (irods-host) (irods-port) (irods-user) (irods-password) (irods-home) (irods-zone)
                (irods-resource)))
-
-(defn beanstalk-queue
-  "Obtains a beanstalk work-queue client."
-  []
-  (queue/mk-client
-   #(beanstalk/new-beanstalk (beanstalk-host) (beanstalk-port))
-   (beanstalk-connect-retries) (beanstalk-task-ttr) (infosquito-beanstalk-tube)))
