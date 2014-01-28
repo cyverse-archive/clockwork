@@ -14,14 +14,14 @@
                  [com.cemerick/url "0.0.7"]
                  [korma "0.3.0-RC2"]
                  [log4j "1.2.17"]
-                 [org.iplantc/clj-jargon "0.2.7-SNAPSHOT"
+                 [org.iplantc/clj-jargon "0.4.0"
                   :exclusions [[org.irods.jargon.transfer/jargon-transfer-dao-spring]]]
-                 [org.iplantc/clojure-commons "1.4.1-SNAPSHOT"]
-                 [org.iplantc/kameleon "0.1.1-SNAPSHOT"]
+                 [org.iplantc/clojure-commons "1.4.7"]
+                 [org.iplantc/kameleon "1.8.4-SNAPSHOT"]
                  [org.slf4j/slf4j-api "1.7.2"]
                  [org.slf4j/slf4j-log4j12 "1.6.6"]
                  [slingshot "0.10.3"]]
-  :plugins [[org.iplantc/lein-iplant-rpm "1.4.1-SNAPSHOT"]]
+  :plugins [[org.iplantc/lein-iplant-rpm "1.4.3-SNAPSHOT"]]
   :profiles {:dev {:resource-paths ["resources/test"]}}
   :aot [clockwork.core]
   :main clockwork.core
