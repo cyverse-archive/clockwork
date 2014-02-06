@@ -1,6 +1,6 @@
 (ns clockwork.config
   (:use [slingshot.slingshot :only [throw+]])
-  (:require [clj-jargon.jargon :as jargon]
+  (:require [clj-jargon.init :as jargon]
             [clojure-commons.config :as cc]
             [clojure-commons.error-codes :as ce]))
 
