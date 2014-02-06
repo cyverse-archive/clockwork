@@ -1,10 +1,10 @@
 (ns clockwork.tree-urls
-  (:use [clj-time.core :only [after? days now plus]]
+  (:use [clj-jargon.init :only [with-jargon]]
+        [clj-time.core :only [after? days now plus]]
         [clockwork.config
          :only [jargon-config tree-urls-bucket tree-urls-avu tree-urls-cleanup-age]]
-        [slingshot.slingshot :only [try+]]
-        [clj-jargon.init])
-  (:require [clj-jargon.metadata :as meta]
+        [slingshot.slingshot :only [try+]])
+  (:require [clj-jargon.metadata :as metajargon]
             [clockwork.riak :as riak]
             [clojure-commons.error-codes :as ce]
             [clojure.tools.logging :as log]))
@@ -26,7 +26,7 @@
   "Determines if a tree URL key is associated with any file in iRODS."
   [cm k]
   (let [path (:path (riak/object-url (tree-urls-bucket) k))]
-    (doto (pos? (count (meta/list-files-with-avu cm (tree-urls-avu) := path)))
+    (doto (pos? (count (metajargon/list-files-with-avu cm (tree-urls-avu) := path)))
       (#(log/debug "key" k (if % "is" "is not") "associated with a file in iRODS")))))
 
 (defn- remove-referenced-keys
