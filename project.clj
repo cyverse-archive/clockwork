@@ -6,6 +6,9 @@
   :scm {:connection "scm:git:git@github.com:iPlantCollaborativeOpenSource/clockwork.git"
         :developerConnection "scm:git:git@github.com:iPlantCollaborativeOpenSource/clockwork.git"
         :url "git@github.com:iPlantCollaborativeOpenSource/clockwork.git"}
+  :pom-addition [:developers
+                 [:developer
+                  [:url "https://github.com/orgs/iPlantCollaborativeOpenSource/teams/iplant-devs"]]]
   :dependencies [[org.clojure/clojure "1.5.1"]
                  [org.clojure/java.jdbc "0.2.3"]
                  [org.clojure/tools.cli "0.2.2"]
